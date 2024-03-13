@@ -3,17 +3,6 @@ const express = require('express');
 
 const router = express.Router();
 
-// router.get('/', async (req, resp) => {
-//     try {
-//         console.log('All Projects');
-//         const projects = await searchProject();
-//         resp.json(projects);
-//     } catch (err) {
-//         console.error('Error getting projects:', err);
-//         resp.status(500).send('Internal Server Error');
-//     }
-// });
-
 router.get('/search', async (req, resp) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -27,40 +16,35 @@ router.get('/search', async (req, resp) => {
         console.error('Error getting projects:', err);
         resp.status(500).send('Internal Server Error');
     }
-
 });
 
 router.get('/', async (req, resp) => {
     try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const searchString = req.query.q;
-
-        const machines = await searchProject(searchString, page, limit);
-        resp.send(machines);
+        const projects = await getAllProjects();
+        resp.send(projects);
 
     } catch (err) {
-        console.error('Error getting machines:', err);
+        console.error('Error getting projects:', err);
         resp.status(500).send('Internal Server Error');
     }
 
 });
 
-router.get('/', async (req, resp) => {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const searchString = req.query.q;
+// router.get('/', async (req, resp) => {
+//     try {
+//         const page = parseInt(req.query.page) || 1;
+//         const limit = parseInt(req.query.limit) || 10;
+//         const searchString = req.query.q;
 
-        const machines = await searchProject(searchString, page, limit);
-        resp.send(machines);
+//         const machines = await searchProject(searchString, page, limit);
+//         resp.send(machines);
 
-    } catch (err) {
-        console.error('Error getting machines:', err);
-        resp.status(500).send('Internal Server Error');
-    }
+//     } catch (err) {
+//         console.error('Error getting projects:', err);
+//         resp.status(500).send('Internal Server Error');
+//     }
 
-});
+// });
 
 router.get('/:id', async (req, resp) => {
     try {
@@ -76,6 +60,12 @@ router.get('/:id', async (req, resp) => {
         resp.status(500).send('Internal Server Error');
     }
 });
+
+async function getAllProjects(){
+    var sql = "SELECT * FROM Projects WHERE IsDeleted != 1;";
+    const projects = await dbConn.retrieveData(sql);
+    return projects;
+}
 
 async function searchProject(searchString, page, limit) {
     if (searchString === undefined) {

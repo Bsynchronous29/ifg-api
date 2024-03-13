@@ -6,11 +6,8 @@ const router = express.Router();
 // Get all machines with pagination
 router.get('/', async (req, resp) => {
     try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
         const searchString = req.query.q;
-
-        const machines = await getMachines(searchString, page, limit);
+        const machines = await getAllMachine(searchString);
         resp.send(machines);
 
     } catch (err) {
@@ -20,20 +17,19 @@ router.get('/', async (req, resp) => {
 
 });
 
+// router.get('/search', async (req, resp) => {
+//     try {
+//         const page = parseInt(req.query.page) || 1;
+//         const limit = parseInt(req.query.limit) || 10;
+//         const searchString = req.query.q;
 
-router.get('/search', async (req, resp) => {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const searchString = req.query.q;
-
-        const machines = await getMachines(searchString, page, limit);
-        resp.json(machines);
-    } catch (err) {
-        console.error('Error getting machines:', err);
-        resp.status(500).send('Internal Server Error');
-    }
-});
+//         const machines = await getMachine(searchString, page, limit);
+//         resp.json(machines);
+//     } catch (err) {
+//         console.error('Error getting machines:', err);
+//         resp.status(500).send('Internal Server Error');
+//     }
+// });
 
 // Add a new machine
 router.post('/', async (req, resp) => {
@@ -102,11 +98,11 @@ router.put('/:refNo', async (req, resp) => {
     }
 });
 
-
+// Get machine by project
 router.get('/projectNo=:projectNo', async (req, resp) => {
     try {
         const projectNo = req.params.projectNo;
-        const machines = await getMachinesByProject(projectNo);
+        const machines = await getMachineByProject(projectNo);
         resp.send(machines);
     } catch (err) {
         console.error('Error getting machines:', err);
@@ -115,6 +111,7 @@ router.get('/projectNo=:projectNo', async (req, resp) => {
     
 });
 
+// Get machine location history
 router.get('/machine-location-histories', async (req, resp) => {
     try {
         const machines = await getMachineLocationHistories();
@@ -125,11 +122,29 @@ router.get('/machine-location-histories', async (req, resp) => {
     }
 });
 
-async function updateMachine(fixedAsset){
-    
+async function getAllMachine(searchString){
+    if (searchString === undefined) {
+        searchString = '';
+    }
+
+    var sql = `SELECT * 
+    FROM FixedAssets 
+    WHERE CategoryId NOT IN (9,10,11,12) 
+    AND (RefNo like '%${searchString}%' 
+        OR Name like '%${searchString}%' 
+        OR Description like '%${searchString}%' 
+        OR Manufacturer like '%${searchString}%' 
+        OR Model like '%${searchString}%' 
+        OR PlateNo like '%${searchString}%' 
+        OR EngineNo like '%${searchString}%' 
+        OR BodyNo like '%${searchString}%') 
+    AND isDeleted != 1 
+    ORDER BY FixedAssetId desc `;
+    console.log(sql);
+    return dbConn.retrieveData(sql);
 }
 
-const getMachines = async (searchString, page, limit) => {
+const getMachine = async (searchString, page, limit) => {
 
     if (searchString === undefined) {
         searchString = '';
@@ -158,7 +173,7 @@ const getMachines = async (searchString, page, limit) => {
 
 };
 
-async function getMachinesByProject(projectNo){
+async function getMachineByProject(projectNo){
     return dbConn.retrieveData(`
         SELECT * 
         FROM FixedAssets 

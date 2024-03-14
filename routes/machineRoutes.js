@@ -1,3 +1,4 @@
+const { DateTime } = require('mssql');
 const dbConn = require('../api');
 const express = require('express');
 
@@ -65,38 +66,52 @@ router.post('/', async (req, resp) => {
 });
 
 // Update an existing machine
-router.put('/:refNo', async (req, resp) => {
+router.put('/:machineId', async (req, resp) => {
     try {
-        const refNo = req.params.refNo;
-        const { Name, CategoryId, ProjectNo, Manufacturer, Model, 
-            PlateNo, EngineNo, BodyNo, Description, Remarks, isDeleted } = req.body;
+        const machineId = req.params.machineId;
+        const jsonBody = req.body;
 
-        if (!Name || !CategoryId || !ProjectNo || !Manufacturer || 
-            !Model || !PlateNo || !EngineNo || !BodyNo || !Description 
-            || isDeleted === undefined) {
-            resp.status(400).send('Bad Request');
-            return;
-        }
+        // Create the machineData object with relevant fields
+        const machineData = {
+            refNo: jsonBody.RefNo || "",
+            name: jsonBody.Name || "",
+            description: jsonBody.Description || "",
+            category: jsonBody.Category || "",
+            subCategory: jsonBody.SubCategory || "",
+            projectNo: jsonBody.ProjectNo || "",
+            manufacturer: jsonBody.Manufacturer || "",
+            model: jsonBody.Model || "",
+            transferredDate: jsonBody.TransferredDate || "",
+            purchasePrice: jsonBody.PurchasedPrice || 0,
+            otherRemarks: jsonBody.OtherRemarks || "",
+            isDeleted: jsonBody.IsDeleted || 0
+        };
 
-        const sql = `UPDATE FixedAssets SET Name = ?, CategoryId = ?, 
-            ProjectNo = ?, Manufacturer = ?, Model = ?, PlateNo = ?, EngineNo = ?, 
-            BodyNo = ?, Description = ?, Remarks = ?, isDeleted = ? WHERE RefNo = ?`;
-        const params = [Name, CategoryId, ProjectNo, Manufacturer, Model, 
-            PlateNo, EngineNo, BodyNo, Description, Remarks, isDeleted, 
-            refNo];
-        const result = await dbConn.executeSqlQuery(sql, params);
+        console.log(machineId);
+        console.log(machineData);
 
-        if (result.affectedRows === 1) {
+        // Validate required fields
+        // if (!isValidMachineData(machineData)) {
+        //     resp.status(400).send('Bad Request');
+        //     return;
+        // }
+
+        // Execute the SQL update query
+        const result = await updateMachine(machineId, machineData);
+        console.log(`Result: ${result}`);
+        // Check if the machine was updated successfully
+        if (result == 1) {
             resp.status(200).send('Machine updated successfully');
         } else {
             resp.status(404).send('Machine not found');
         }
-
     } catch (err) {
         console.error('Error updating machine:', err);
         resp.status(500).send('Internal Server Error');
     }
 });
+
+
 
 // Get machine by project
 router.get('/projectNo=:projectNo', async (req, resp) => {
@@ -121,6 +136,62 @@ router.get('/machine-location-histories', async (req, resp) => {
         resp.status(500).send('Internal Server Error');
     }
 });
+
+
+// Function to validate machine data
+function isValidMachineData(machineData) {
+    const requiredFields = ['refNo', 'name', 'description', 'category', 
+    'subCategory', 'projectNo', 'manufacturer', 'model', 'transferredDate', 
+    'purchasePrice', 'isDeleted'];
+
+    return requiredFields.every(field => machineData.hasOwnProperty(field));
+}
+
+// Function to execute the SQL update query
+async function updateMachine(machineId, machineData) {
+    const {
+        refNo, name, description, category, subCategory, projectNo, 
+        manufacturer, model, transferredDate, purchasePrice,otherRemarks, isDeleted 
+    } = machineData;
+
+    console.log(machineData.transferredDate);
+
+    // Construct the SQL update query with named parameters
+    const sql = `UPDATE FixedAssets SET 
+        RefNo = '${machineData.refNo}', 
+        Name = '${machineData.name}', 
+        Description = '${machineData.description}', 
+        Category = '${machineData.category}', 
+        SubCategory = '${machineData.subCategory}', 
+        ProjectNo = '${machineData.projectNo}', 
+        Manufacturer = '${machineData.manufacturer}', 
+        Model = '${machineData.model}', 
+        TransferredDate = '${machineData.transferredDate}', 
+        PurchasedPrice = ${machineData.purchasePrice}, 
+        OtherRemarks = '${machineData.otherRemarks}',
+        IsDeleted = ${machineData.isDeleted} 
+        WHERE FixedAssetId = ${machineId}`;
+
+        console.log(sql);
+    const params = {
+        refNo, 
+        name, 
+        description, 
+        category, 
+        subCategory, 
+        projectNo, 
+        manufacturer, 
+        model, 
+        transferredDate, 
+        purchasePrice, 
+        otherRemarks,
+        isDeleted, 
+        machineId
+    };
+
+    // Execute the SQL query and return the result
+    return dbConn.executeSqlQuery(sql);
+}
 
 async function getAllMachine(searchString){
     if (searchString === undefined) {

@@ -9,6 +9,7 @@ const app = express();
 const port = 8888;
 
 app.use(cors());
+app.use(express.json());
 
 // Middleware to ensure JSON responses
 app.use((req, res, next) => {

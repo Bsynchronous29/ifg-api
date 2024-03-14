@@ -34,11 +34,11 @@ async function connectToDatabase() {
         console.error('Error connecting to the database:', err);
     }
 }
-async function executeSqlQuery(query, params) {
+async function executeSqlQuery(query) {
     try {
         await connectToDatabase();
-        const result = await sql.query(query, params);
-        return result.recordset;
+        const result = await sql.query(query);
+        return result.rowsAffected;
     } catch (err) {
         console.error('Error executing query:', err);
         throw err;

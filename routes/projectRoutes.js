@@ -5,12 +5,11 @@ const router = express.Router();
 
 router.get('/search', async (req, resp) => {
     try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
+        // const page = parseInt(req.query.page) || 1;
+        // const limit = parseInt(req.query.limit) || 10;
         const searchString = req.query.q;
-
-        const { projects, totalCount } = await searchProject(searchString, page, limit);
-        resp.send({ projects, totalCount });
+        const projects= await searchProject(searchString);
+        resp.send(projects);
 
     } catch (err) {
         console.error('Error getting projects:', err);
@@ -67,34 +66,30 @@ async function getAllProjects(){
     return projects;
 }
 
-async function searchProject(searchString, page, limit) {
+async function searchProject(searchString) {
     if (searchString === undefined) {
         searchString = '';
     }
-    const offset = (page - 1) * limit;
 
     var temp = `SELECT * 
         FROM Projects 
         WHERE isDeleted != 1 and 
             (ProjectNo like '%${searchString}%' or 
-            Name like '%${searchString}%' or 
-            WorkScope like '%${searchString}%' or 
-            FileName like '%${searchString}%')
-        ORDER BY ProjectId DESC
-        OFFSET ${offset} ROWS 
-        FETCH NEXT ${limit} ROWS ONLY`;
+                Name like '%${searchString}%' or 
+                WorkScope like '%${searchString}%' or 
+                FileName like '%${searchString}%' or
+                ClientName like '%${searchString}%' or
+                ConsultantName like '%${searchString}%' or
+                ProposedToName like '%${searchString}%' or
+                ProjectManagerName like '%${searchString}%' or
+                DocumentControllerName like '%${searchString}%') 
+        ORDER BY ProjectId DESC`;
+
+        console.log(temp);
 
     const projects = await dbConn.retrieveData(temp);
 
-    // Count total number of projects matching the search criteria
-    const countQuery = `SELECT COUNT(*) AS total FROM Projects WHERE isDeleted != 1 and 
-        (ProjectNo like '%${searchString}%' or 
-        Name like '%${searchString}%' or 
-        WorkScope like '%${searchString}%' or 
-        FileName like '%${searchString}%')`;
-    const [{ total }] = await dbConn.retrieveData(countQuery);
-
-    return { projects, totalCount: Math.ceil(total / limit) };
+    return projects;
 }
 
 module.exports = router;

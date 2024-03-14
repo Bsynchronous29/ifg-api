@@ -210,7 +210,7 @@ async function getAllMachine(searchString){
         OR EngineNo like '%${searchString}%' 
         OR BodyNo like '%${searchString}%') 
     AND isDeleted != 1 
-    ORDER BY FixedAssetId desc `;
+    ORDER BY PurchasedDate desc `;
     console.log(sql);
     return dbConn.retrieveData(sql);
 }

@@ -13,7 +13,6 @@ const config = {
 
 async function retrieveData(query){
     try {
-        // `SELECT * FROM FixedAssets where isDeleted != 1`
         await connectToDatabase();
         const res = await queryDatabase(query);
         return res;

@@ -18,20 +18,6 @@ router.get('/', async (req, resp) => {
 
 });
 
-// router.get('/search', async (req, resp) => {
-//     try {
-//         const page = parseInt(req.query.page) || 1;
-//         const limit = parseInt(req.query.limit) || 10;
-//         const searchString = req.query.q;
-
-//         const machines = await getMachine(searchString, page, limit);
-//         resp.json(machines);
-//     } catch (err) {
-//         console.error('Error getting machines:', err);
-//         resp.status(500).send('Internal Server Error');
-//     }
-// });
-
 // Add a new machine
 router.post('/', async (req, resp) => {
     try {
@@ -199,18 +185,19 @@ async function getAllMachine(searchString){
     }
 
     var sql = `SELECT * 
-    FROM FixedAssets 
-    WHERE CategoryId NOT IN (9,10,11,12) 
-    AND (RefNo like '%${searchString}%' 
-        OR Name like '%${searchString}%' 
-        OR Description like '%${searchString}%' 
-        OR Manufacturer like '%${searchString}%' 
-        OR Model like '%${searchString}%' 
-        OR PlateNo like '%${searchString}%' 
-        OR EngineNo like '%${searchString}%' 
-        OR BodyNo like '%${searchString}%') 
-    AND isDeleted != 1 
-    ORDER BY PurchasedDate desc `;
+        FROM FixedAssets 
+        WHERE CategoryId NOT IN (9,10,11,12) 
+        AND (RefNo like '%${searchString}%' 
+            OR Name like '%${searchString}%' 
+            OR Description like '%${searchString}%' 
+            OR Manufacturer like '%${searchString}%' 
+            OR Model like '%${searchString}%' 
+            OR PlateNo like '%${searchString}%' 
+            OR EngineNo like '%${searchString}%' 
+            OR subCategory like '%${searchString}%' 
+            OR BodyNo like '%${searchString}%') 
+        AND isDeleted != 1 
+        ORDER BY PurchasedDate desc `;
     console.log(sql);
     return dbConn.retrieveData(sql);
 }
